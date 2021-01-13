@@ -30,6 +30,10 @@ def init_loan() -> pl.Loan:
 
 
 def init_multiple_loans():
+    '''
+    Gets user input to determine the number of loans to be initialized
+    :return: total periodic payment across all loans
+    '''
     loans = []
     total_payment = 0
 
