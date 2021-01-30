@@ -29,6 +29,7 @@ def get_user_credentials() -> tuple:
     _pass = get_user_pass()
     return email, _pass
 
+
 def connect_to_database():
     """
     Connects to the financeTracker database
@@ -140,7 +141,6 @@ def new_or_returning_user(finance_db):
      is received
     """
     response = input("To sign-up, enter \"s\". To log-in, enter \"l\": ")
-    success = False
 
     if response.lower() == "s":
         success = create_new_user(finance_db)
@@ -152,6 +152,7 @@ def new_or_returning_user(finance_db):
             print("Log-in success. Welcome back!")
         else:
             print("Error. user does not exist/email/password is incorrect")
+            new_or_returning_user(finance_db)
     else:
         print("invalid response")
         new_or_returning_user(finance_db)
