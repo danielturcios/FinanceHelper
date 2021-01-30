@@ -1,6 +1,6 @@
 import payulator as pl
 import mysql.connector
-
+import User
 
 def get_user_email() -> str:
     """
@@ -98,6 +98,7 @@ def init_multiple_loans():
     return total_payment
 
 
+#TODO: find a way to get new user id in order to create a new user object
 def create_new_user(finance_db) -> bool:
     """
     Creates a new user account and inserts the new user into the users table in the financeTracker Database
@@ -105,16 +106,15 @@ def create_new_user(finance_db) -> bool:
     """
     user_name = str(input("Enter your name: "))
     user_email, user_pass = get_user_credentials()
+    new_user = User.User(user_name, user_email, user_pass)
 
     finance_cursor = finance_db.cursor()
     sql = "INSERT INTO users (name, email, password) VALUES (%s, %s, %s)"
-    val = (user_name, user_email, user_pass)
+    val = (new_user.get_name(), new_user.get_email(), new_user.get_pass())
     finance_cursor.execute(sql, val)
-
     finance_db.commit()
 
-    print(finance_cursor.rowcount, "record inserted.")
-    return True
+    return True, new_user
 
 
 def log_in_user(finance_db):
@@ -127,10 +127,24 @@ def log_in_user(finance_db):
     user_cred = get_user_credentials()
 
     finance_cursor.execute('SELECT * FROM users WHERE email = %s AND password = %s', user_cred)
+
     account = finance_cursor.fetchone()
     if account:
+        #TODO: if user exists in database then create a new user object
+        print(account)
         return True
     return False
+
+
+# TODO: finish main interface
+def main_interface(finance_db):
+    """
+    prompts user to select from viewing, updating, deleting, or adding a new loan/debt
+    :param finance_db: financeTracker database
+    :return: none
+    """
+
+    return
 
 
 def new_or_returning_user(finance_db):
@@ -143,18 +157,20 @@ def new_or_returning_user(finance_db):
     response = input("To sign-up, enter \"s\". To log-in, enter \"l\": ")
 
     if response.lower() == "s":
-        success = create_new_user(finance_db)
+        success, user = create_new_user(finance_db)
         if success:
-            print("New user was successfully created")
+            print("New user was successfully created.\n")
+            main_interface(finance_db, user)
     elif response.lower() == "l":
         success = log_in_user(finance_db)
         if success:
-            print("Log-in success. Welcome back!")
+            print("Log-in success. Welcome back!\n")
+            main_interface(finance_db)
         else:
-            print("Error. user does not exist/email/password is incorrect")
+            print("Error: email/password is incorrect.\n")
             new_or_returning_user(finance_db)
     else:
-        print("invalid response")
+        print("invalid response\n")
         new_or_returning_user(finance_db)
 
 
