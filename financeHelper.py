@@ -2,11 +2,38 @@ import payulator as pl
 import mysql.connector
 
 
+def get_user_email() -> str:
+    """
+    Asks a user for their email (used for both sign up and log in purposes)
+    :return: str (email)
+    """
+    email = str(input("Enter your email: "))
+    return email
+
+
+def get_user_pass() -> str:
+    """
+    Asks a user to enter their password (used for both sign up and log in purposes)
+    :return: str (password)
+    """
+    password = str(input("Enter a password (max length is 20 characters): "))
+    return password
+
+
+def get_user_credentials() -> tuple:
+    """
+    asks a user to enter their email and password
+    :return: a tuple of (email, password)
+    """
+    email = get_user_email()
+    _pass = get_user_pass()
+    return email, _pass
+
 def connect_to_database():
-    '''
+    """
     Connects to the financeTracker database
     :return: returns a connection to the database
-    '''
+    """
     mydb = mysql.connector.connect(
         host="localhost",
         user="root",
@@ -46,10 +73,10 @@ def init_loan() -> pl.Loan:
 
 
 def init_multiple_loans():
-    '''
+    """
     Gets user input to determine the number of loans to be initialized
     :return: total periodic payment across all loans
-    '''
+    """
     loans = []
     total_payment = 0
 
@@ -70,42 +97,74 @@ def init_multiple_loans():
     return total_payment
 
 
-def create_new_user(financeDB) -> bool:
-    '''
+def create_new_user(finance_db) -> bool:
+    """
     Creates a new user account and inserts the new user into the users table in the financeTracker Database
     :return: true if user was successfully created and entered into the users table; otherwise, returns false
-    '''
+    """
     user_name = str(input("Enter your name: "))
-    user_email = str(input("Enter your email: "))
-    user_pass = str(input("Create a password (max length is 20 characters): "))
+    user_email, user_pass = get_user_credentials()
 
-    finance_cursor = financeDB.cursor()
+    finance_cursor = finance_db.cursor()
     sql = "INSERT INTO users (name, email, password) VALUES (%s, %s, %s)"
     val = (user_name, user_email, user_pass)
     finance_cursor.execute(sql, val)
 
-    financeDB.commit()
+    finance_db.commit()
 
     print(finance_cursor.rowcount, "record inserted.")
     return True
 
 
-def welcome_msg():
-    '''
-    Prints program home screen, i.e. asks user to login or create a new account
-    :return: none
-    '''
-    print("Hello! Welcome to FinancialAdvisor!")
-    financeDB = connect_to_database()
+def log_in_user(finance_db):
+    """
+    Asks a user for log in credentials and then attempts to log in the user
+    :param finance_db: verifies log in credentials with user info in financeTracker db
+    :return: True if user credentials exist in database and are the exact same as inputted; False if otherwise
+    """
+    finance_cursor = finance_db.cursor()
+    user_cred = get_user_credentials()
 
+    finance_cursor.execute('SELECT * FROM users WHERE email = %s AND password = %s', user_cred)
+    account = finance_cursor.fetchone()
+    if account:
+        return True
+    return False
+
+
+def new_or_returning_user(finance_db):
+    """
+    prompts user to log-in or create a new account
+    :param finance_db: financeTracker database
+    :return: recursive function; if input is incorrect then recursively asks user for new input until a valid input
+     is received
+    """
     response = input("To sign-up, enter \"s\". To log-in, enter \"l\": ")
+    success = False
 
     if response.lower() == "s":
-        create_new_user(financeDB)
+        success = create_new_user(finance_db)
+        if success:
+            print("New user was successfully created")
     elif response.lower() == "l":
-        print("now logging-in")
+        success = log_in_user(finance_db)
+        if success:
+            print("Log-in success. Welcome back!")
+        else:
+            print("Error. user does not exist/email/password is incorrect")
     else:
         print("invalid response")
+        new_or_returning_user(finance_db)
+
+
+def welcome_msg():
+    """
+    Prints program home screen, i.e. asks user to login or create a new account
+    :return: none
+    """
+    print("Hello! Welcome to FinancialAdvisor!")
+    financeDB = connect_to_database()
+    new_or_returning_user(financeDB)
 
 
 welcome_msg()
