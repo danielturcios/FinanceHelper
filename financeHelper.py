@@ -2,6 +2,7 @@ import payulator as pl
 import mysql.connector
 import User
 
+
 def get_user_email() -> str:
     """
     Asks a user for their email (used for both sign up and log in purposes)
@@ -98,7 +99,6 @@ def init_multiple_loans():
     return total_payment
 
 
-#TODO: find a way to get new user id in order to create a new user object
 def create_new_user(finance_db) -> bool:
     """
     Creates a new user account and inserts the new user into the users table in the financeTracker Database
@@ -114,6 +114,12 @@ def create_new_user(finance_db) -> bool:
     finance_cursor.execute(sql, val)
     finance_db.commit()
 
+    sql = "SELECT * FROM users WHERE email = %s AND password = %s"
+    val = (new_user.get_email(), new_user.get_pass())
+
+    finance_cursor.execute(sql, val)
+    result = finance_cursor.fetchone()
+    new_user.set_id(result[3])
     return True, new_user
 
 
@@ -130,20 +136,20 @@ def log_in_user(finance_db):
 
     account = finance_cursor.fetchone()
     if account:
-        #TODO: if user exists in database then create a new user object
-        print(account)
-        return True
-    return False
+        current_user = User.User(account[0], account[1], account[2], account[3])
+        return True, current_user
+    return False, None
 
 
 # TODO: finish main interface
-def main_interface(finance_db):
+def main_interface(finance_db, user):
     """
     prompts user to select from viewing, updating, deleting, or adding a new loan/debt
     :param finance_db: financeTracker database
-    :return: none
+    :param user: user object (see User.py)
+    :return:
     """
-
+    print(user)
     return
 
 
@@ -162,10 +168,10 @@ def new_or_returning_user(finance_db):
             print("New user was successfully created.\n")
             main_interface(finance_db, user)
     elif response.lower() == "l":
-        success = log_in_user(finance_db)
+        success, user = log_in_user(finance_db)
         if success:
             print("Log-in success. Welcome back!\n")
-            main_interface(finance_db)
+            main_interface(finance_db, user)
         else:
             print("Error: email/password is incorrect.\n")
             new_or_returning_user(finance_db)
