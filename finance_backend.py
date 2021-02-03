@@ -1,3 +1,6 @@
+"""
+This file is in charge of handling any interaction with the financeTracker db
+"""
 import mysql.connector
 import User
 
