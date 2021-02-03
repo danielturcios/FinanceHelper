@@ -29,6 +29,9 @@ class User:
     def get_loans(self):
         return self.loans
 
+    def get_pass(self):
+        return self.password
+
     def set_id(self, new_id):
         self.id = new_id
 

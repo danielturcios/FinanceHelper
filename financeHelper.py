@@ -1,6 +1,6 @@
 import payulator as pl
-import mysql.connector
 import User
+import finance_backend as fb
 
 
 def get_user_email() -> str:
@@ -29,21 +29,6 @@ def get_user_credentials() -> tuple:
     email = get_user_email()
     _pass = get_user_pass()
     return email, _pass
-
-
-def connect_to_database():
-    """
-    Connects to the financeTracker database
-    :return: returns a connection to the database
-    """
-    mydb = mysql.connector.connect(
-        host="localhost",
-        user="root",
-        password="temp",
-        database="financeTracker"
-    )
-
-    return mydb
 
 
 def init_loan() -> pl.Loan:
@@ -90,74 +75,12 @@ def init_multiple_loans(user):
     for loan in user.get_loans():
         print(loan)
         s = loan.summarize()
-        # print(s)
         total_payment += s['periodic_payment']
         print()
 
     print("Total monthly payment:", total_payment)
 
     return total_payment
-
-
-def create_new_user(finance_db) -> (bool, User):
-    """
-    Creates a new user account and inserts the new user into the users table in the financeTracker Database
-    :return: true if user was successfully created and entered into the users table; otherwise, returns false
-    """
-    user_name = str(input("Enter your name: "))
-    user_email, user_pass = get_user_credentials()
-    new_user = User.User(user_name, user_email, user_pass)
-
-    finance_cursor = finance_db.cursor()
-    sql = "INSERT INTO users (name, email, password) VALUES (%s, %s, %s)"
-    val = (new_user.get_name(), new_user.get_email(), new_user.get_pass())
-    finance_cursor.execute(sql, val)
-    finance_db.commit()
-
-    sql = "SELECT * FROM users WHERE email = %s AND password = %s"
-    val = (new_user.get_email(), new_user.get_pass())
-    finance_cursor.execute(sql, val)
-    result = finance_cursor.fetchone()
-
-    new_user.set_id(result[3])
-    return True, new_user
-
-
-def log_in_user(finance_db):
-    """
-    Asks a user for log in credentials and then attempts to log in the user
-    :param finance_db: verifies log in credentials with user info in financeTracker db
-    :return: True if user credentials exist in database and are the exact same as inputted; False if otherwise
-    """
-    finance_cursor = finance_db.cursor()
-    user_cred = get_user_credentials()
-
-    finance_cursor.execute('SELECT * FROM users WHERE email = %s AND password = %s', user_cred)
-
-    account = finance_cursor.fetchone()
-    if account:
-        current_user = User.User(account[0], account[1], account[2], account[3])
-        return True, current_user
-    return False, None
-
-
-def add_loans_to_db(finance_db, user):
-    """
-    Adds loans from user.loans to financeTracker database
-    :param finance_db: financeTracker db
-    :param user: User object. Contains attribute loans which is a list of loans
-    :return:
-    """
-    finance_cursor = finance_db.cursor()
-
-    sql = "INSERT INTO debts (uid, amount, interest_rate, num_of_payments) VALUES (%s, %s, %s, %s)"
-    val = []
-    uid = user.get_id()
-    for loan in user.get_loans():
-        val.append((uid, loan.principal, loan.interest_rate, loan.num_payments))
-    finance_cursor.executemany(sql, val)
-    finance_db.commit()
-    return
 
 
 # TODO: finish main interface
@@ -180,13 +103,32 @@ def main_interface(finance_db, user):
             print("\"q\": quit program")
         elif command.lower() == "a":
             init_multiple_loans(user)
-            add_loans_to_db(finance_db, user)
+            fb.add_loans_to_db(finance_db, user)
             print("New loan(s) was/were added successfully.")
+        elif command.lower() == "d":
+            print("Loan was successfully deleted.")
+        elif command.lower() == "u":
+            print("Loan was successfully updated.")
+        elif command.lower() == "v":
+            print("Loan was viewed.")
         else:
-            print("Error: invalid command \"" + command.lower() + "\"")
+            print("Error: invalid command \"" + command.lower() + "\".")
         command = input("\nEnter one of the following commands: a,d,u,v,q, or h: ")
 
     return
+
+
+def create_new_user(finance_db) -> (bool, User):
+    """
+    Creates a new user account and inserts the new user into the users table in the financeTracker Database
+    :return: true if user was successfully created and entered into the users table; otherwise, returns false
+    """
+    user_name = str(input("Enter your name: "))
+    user_email, user_pass = get_user_credentials()
+    new_user = User.User(user_name, user_email, user_pass)
+
+    user = fb.new_user(finance_db, new_user)
+    return True, user
 
 
 def new_or_returning_user(finance_db):
@@ -204,7 +146,8 @@ def new_or_returning_user(finance_db):
             print("New user was successfully created.\n")
             main_interface(finance_db, user)
     elif response.lower() == "l":
-        success, user = log_in_user(finance_db)
+        user_cred = get_user_credentials()
+        success, user = fb.log_in_user(finance_db, user_cred)
         if success:
             print("Log-in success. Welcome back!\n")
             main_interface(finance_db, user)
@@ -222,7 +165,7 @@ def welcome_msg():
     :return: none
     """
     print("Hello! Welcome to FinancialAdvisor!")
-    financeDB = connect_to_database()
+    financeDB = fb.connect_to_database("root", "temp")
     new_or_returning_user(financeDB)
 
 
