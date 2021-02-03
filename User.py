@@ -23,9 +23,6 @@ class User:
     def get_email(self):
         return self.email
 
-    def get_pass(self):
-        return self.password
-
     def get_id(self):
         return self.id
 

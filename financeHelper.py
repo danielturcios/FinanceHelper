@@ -74,7 +74,7 @@ def init_loan() -> pl.Loan:
     return loan
 
 
-def init_multiple_loans(finance_db, user):
+def init_multiple_loans(user):
     """
     Gets user input to determine the number of loans to be initialized
     :return: total periodic payment across all loans
@@ -90,11 +90,12 @@ def init_multiple_loans(finance_db, user):
     for loan in user.get_loans():
         print(loan)
         s = loan.summarize()
-        print(s)
+        # print(s)
         total_payment += s['periodic_payment']
         print()
 
     print("Total monthly payment:", total_payment)
+
     return total_payment
 
 
@@ -115,9 +116,9 @@ def create_new_user(finance_db) -> (bool, User):
 
     sql = "SELECT * FROM users WHERE email = %s AND password = %s"
     val = (new_user.get_email(), new_user.get_pass())
-
     finance_cursor.execute(sql, val)
     result = finance_cursor.fetchone()
+
     new_user.set_id(result[3])
     return True, new_user
 
@@ -140,6 +141,25 @@ def log_in_user(finance_db):
     return False, None
 
 
+def add_loans_to_db(finance_db, user):
+    """
+    Adds loans from user.loans to financeTracker database
+    :param finance_db: financeTracker db
+    :param user: User object. Contains attribute loans which is a list of loans
+    :return:
+    """
+    finance_cursor = finance_db.cursor()
+
+    sql = "INSERT INTO debts (uid, amount, interest_rate, num_of_payments) VALUES (%s, %s, %s, %s)"
+    val = []
+    uid = user.get_id()
+    for loan in user.get_loans():
+        val.append((uid, loan.principal, loan.interest_rate, loan.num_payments))
+    finance_cursor.executemany(sql, val)
+    finance_db.commit()
+    return
+
+
 # TODO: finish main interface
 def main_interface(finance_db, user):
     """
@@ -153,17 +173,18 @@ def main_interface(finance_db, user):
     while command.lower() != "q":
         if command.lower() == "h":
             print("Help: command options")
-            print("\"a\": add a new loan or debt.")
-            print("\"d\": delete a loan or debt.")
+            print("\"a\": add new loan(s) or debt(s).")
+            print("\"d\": delete loan(s) or debt(s).")
             print("\"u\": update an existing loan or debt")
             print("\"v\": view the details of an existing loan or debt")
             print("\"q\": quit program")
         elif command.lower() == "a":
-            init_multiple_loans(finance_db, user)
-            print("New loans were added successfully.")
+            init_multiple_loans(user)
+            add_loans_to_db(finance_db, user)
+            print("New loan(s) was/were added successfully.")
         else:
             print("Error: invalid command \"" + command.lower() + "\"")
-        command = input("Enter one of the following commands: a,d,u,v,q, or h: ")
+        command = input("\nEnter one of the following commands: a,d,u,v,q, or h: ")
 
     return
 
