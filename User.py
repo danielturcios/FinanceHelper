@@ -1,6 +1,3 @@
-import Loan
-
-
 class User:
     """
     User object. Used to keep track of current user. Shares same parameters as User table columns in MySQL database

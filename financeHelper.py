@@ -74,21 +74,20 @@ def init_loan() -> pl.Loan:
     return loan
 
 
-def init_multiple_loans():
+def init_multiple_loans(finance_db, user):
     """
     Gets user input to determine the number of loans to be initialized
     :return: total periodic payment across all loans
     """
-    loans = []
     total_payment = 0
 
-    num_loans = int(input("Enter the number of loans to be evaluated: "))
+    num_loans = int(input("Enter the number of loans to be added: "))
     for i in range(num_loans):
         loan = init_loan()
-        loans.append(loan)
+        user.add_loan(loan)
         print()
 
-    for loan in loans:
+    for loan in user.get_loans():
         print(loan)
         s = loan.summarize()
         print(s)
@@ -99,7 +98,7 @@ def init_multiple_loans():
     return total_payment
 
 
-def create_new_user(finance_db) -> bool:
+def create_new_user(finance_db) -> (bool, User):
     """
     Creates a new user account and inserts the new user into the users table in the financeTracker Database
     :return: true if user was successfully created and entered into the users table; otherwise, returns false
@@ -149,7 +148,23 @@ def main_interface(finance_db, user):
     :param user: user object (see User.py)
     :return:
     """
-    print(user)
+    command = input("Enter one of the following commands: a,d,u,v,q, or h: ")
+
+    while command.lower() != "q":
+        if command.lower() == "h":
+            print("Help: command options")
+            print("\"a\": add a new loan or debt.")
+            print("\"d\": delete a loan or debt.")
+            print("\"u\": update an existing loan or debt")
+            print("\"v\": view the details of an existing loan or debt")
+            print("\"q\": quit program")
+        elif command.lower() == "a":
+            init_multiple_loans(finance_db, user)
+            print("New loans were added successfully.")
+        else:
+            print("Error: invalid command \"" + command.lower() + "\"")
+        command = input("Enter one of the following commands: a,d,u,v,q, or h: ")
+
     return
 
 
