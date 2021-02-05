@@ -52,12 +52,8 @@ def new_user(finance_db, user):
     finance_cursor.execute(sql, val)
     finance_db.commit()
 
-    sql = "SELECT * FROM users WHERE email = %s AND password = %s"
-    val = (user.get_email(), user.get_pass())
-    finance_cursor.execute(sql, val)
-    result = finance_cursor.fetchone()
-
-    user.set_id(result[3])
+    user_id = finance_cursor.lastrowid
+    user.set_id(user_id)
     return user
 
 

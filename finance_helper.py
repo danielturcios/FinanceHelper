@@ -31,6 +31,27 @@ def get_user_credentials() -> tuple:
     return email, _pass
 
 
+def view_loans(finance_db, user):
+    """
+    Prompts a user to specify which loan they'd like to view in detail.
+    :param finance_db: financeTracker database
+    :param user: user object
+    :return:
+    """
+    loans = []
+    print("Enter the id of the loan you'd like to view, \"a\" to view all loans in detail,")
+    command = input("or s to view a simplified version of all loans: ")
+
+    if command.lower() == "a":
+        loans = fb.return_all_loans(finance_db, user.get_id())
+    elif command.lower() == "s":
+        print("s")
+    else:
+        loans = fb.return_single_loan(finance_db, user.get_id(), command)
+
+    return None
+
+
 # TODO: finish main interface
 def main_interface(finance_db, user):
     """
@@ -58,9 +79,10 @@ def main_interface(finance_db, user):
         elif command.lower() == "u":
             print("Loan was successfully updated.")
         elif command.lower() == "v":
-            print("Loan was viewed.")
+            view_loans(finance_db, user)
         else:
             print("Error: invalid command \"" + command.lower() + "\".")
+
         command = input("\nEnter one of the following commands: a,d,u,v,q, or h: ")
 
     return
@@ -91,6 +113,7 @@ def new_or_returning_user(finance_db):
     if response.lower() == "s":
         success, user = create_new_user(finance_db)
         if success:
+            print(user)
             print("New user was successfully created.\n")
             main_interface(finance_db, user)
     elif response.lower() == "l":
