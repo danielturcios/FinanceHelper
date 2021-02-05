@@ -1,6 +1,6 @@
 import User
 import finance_backend as fb
-import user_updates as uu
+import loan_updates as lu
 
 
 def get_user_email() -> str:
@@ -31,7 +31,32 @@ def get_user_credentials() -> tuple:
     return email, _pass
 
 
-def view_loans(finance_db, user):
+def _print_help_menu():
+    """
+    prints help message describing commands that an be used in the main interface
+    :return:
+    """
+    print("Help: command options")
+    print("\"a\": add new loan(s) or debt(s).")
+    print("\"d\": delete loan(s) or debt(s).")
+    print("\"u\": update an existing loan or debt")
+    print("\"v\": view the details of an existing loan or debt")
+    print("\"q\": quit program")
+
+
+def _add_loan(finance_db, user):
+    """
+    Creates a new loan and adds it to both the user and financeTracker db
+    :param finance_db: financeTracker database
+    :param user: user object
+    :return: True on success
+    """
+    user = lu.init_multiple_loans(user)
+    fb.add_loans_to_db(finance_db, user)
+    print("New loan(s) was/were added successfully.")
+
+
+def _view_loans(finance_db, user):
     """
     Prompts a user to specify which loan they'd like to view in detail.
     :param finance_db: financeTracker database
@@ -39,15 +64,28 @@ def view_loans(finance_db, user):
     :return:
     """
     loans = []
+    simplify = False
     print("Enter the id of the loan you'd like to view, \"a\" to view all loans in detail,")
-    command = input("or s to view a simplified version of all loans: ")
+    command = input("or \"s\" to view a simplified version of all loans: ")
 
-    if command.lower() == "a":
+    if command.lower() == "a" or command.lower() == "s":
+        if command.lower() == "s":
+            simplify = True
         loans = fb.return_all_loans(finance_db, user.get_id())
-    elif command.lower() == "s":
-        print("s")
     else:
-        loans = fb.return_single_loan(finance_db, user.get_id(), command)
+        loan = fb.return_single_loan(finance_db, user.get_id(), command)
+        if loan is False:
+            print("Error: loan with id " + command + " does not exist.")
+            return
+        else:
+            loans.append(loan)
+
+    for loan in loans:
+        # TODO: implement simplify all_loan_information
+        if simplify:
+            pass
+        else:
+            loan_summary = lu.detailed_loan_info(loan)
 
     return None
 
@@ -63,23 +101,24 @@ def main_interface(finance_db, user):
     command = input("Enter one of the following commands: a,d,u,v,q, or h: ")
 
     while command.lower() != "q":
-        if command.lower() == "h":
-            print("Help: command options")
-            print("\"a\": add new loan(s) or debt(s).")
-            print("\"d\": delete loan(s) or debt(s).")
-            print("\"u\": update an existing loan or debt")
-            print("\"v\": view the details of an existing loan or debt")
-            print("\"q\": quit program")
-        elif command.lower() == "a":
-            user = uu.init_multiple_loans(user)
-            fb.add_loans_to_db(finance_db, user)
-            print("New loan(s) was/were added successfully.")
-        elif command.lower() == "d":
+
+        if command.lower() == "h":  # view help
+            _print_help_menu()
+
+        elif command.lower() == "a":    # add a loan
+            _add_loan(finance_db, user)
+
+        elif command.lower() == "d":    # delete a loan
+            # TODO: delete a loan
             print("Loan was successfully deleted.")
-        elif command.lower() == "u":
+
+        elif command.lower() == "u":    # update a loan
+            # TODO: update a loan
             print("Loan was successfully updated.")
-        elif command.lower() == "v":
-            view_loans(finance_db, user)
+
+        elif command.lower() == "v":    # view a loan
+            _view_loans(finance_db, user)
+
         else:
             print("Error: invalid command \"" + command.lower() + "\".")
 
