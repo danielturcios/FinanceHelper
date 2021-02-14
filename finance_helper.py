@@ -86,7 +86,7 @@ def _add_loan(finance_db, user):
     fb.add_loans_to_db(finance_db, user)
     print("New loan(s) was/were added successfully.")
 
-
+vars()
 def _view_loans(finance_db, user):
     """
     Prompts a user to specify which loan they'd like to view in detail.
