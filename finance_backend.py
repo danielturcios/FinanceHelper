@@ -11,14 +11,38 @@ def connect_to_database(user, password):
     Connects to the financeTracker database
     :return: returns a connection to the database
     """
-    mydb = mysql.connector.connect(
-        host="localhost",
-        user=user,
-        password=password,
-        database="financeTracker"
-    )
+    mydb = None
+    try:
+        mydb = mysql.connector.connect(
+            host="localhost",
+            user=user,
+            password=password,
+            database="financeTracker"
+        )
+    except mysql.connector.Error as e:
+        print(e)
 
     return mydb
+
+
+def delete_loan(finance_db, user, loan_id):
+    """
+    Deletes a loan from user.debts to financeTracker database
+    :param finance_db: financeTracker db connection
+    :param user: User object
+    :param loan_id: id of the loan to be deleted
+    :return: True on successful loan deletion; false if otherwise
+    """
+    finance_cursor = finance_db.cursor()
+
+    sql = "DELETE FROM debts WHERE uid = %s AND did = %s"
+    val = (user.get_id(), loan_id)
+    finance_cursor.execute(sql, val)
+    finance_db.commit()
+
+    if finance_cursor.rowcount > 0:
+        return True
+    return False
 
 
 def add_loans_to_db(finance_db, user):
@@ -100,11 +124,12 @@ def return_single_loan(finance_db, uid, did):
     return loan
 
 
-def return_all_loans(finance_db, uid):
+def return_all_loans(finance_db, uid, simplify):
     """
     Query to return all loans corresponding to the user
-    :param finance_db:
+    :param finance_db: financeTracker db
     :param uid: user id
+    :param simplify: a boolean value, if True returns
     :return: a list of payulator loan objects
     """
     loans = []
@@ -118,7 +143,10 @@ def return_all_loans(finance_db, uid):
         return False
 
     for loan_details in loan_details_list:
-        loan = lu.construct_loan(loan_details[1], loan_details[2], loan_details[3])
+        if simplify:
+            loan = (loan_details[4],) + loan_details[1:3]
+        else:
+            loan = lu.construct_loan(loan_details[1], loan_details[2], loan_details[3])
         loans.append(loan)
 
     return loans

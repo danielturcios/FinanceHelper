@@ -1,6 +1,7 @@
 import payulator as pl
 
 
+
 def detailed_loan_info(loan):
     """
     Prints the detailed information of the payulator loan object, as well as a payment plan.

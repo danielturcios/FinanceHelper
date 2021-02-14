@@ -21,6 +21,22 @@ def get_user_pass() -> str:
     return password
 
 
+def get_loan_id() -> int:
+    """
+    Asks a user to enter the id of a loan
+    :return: int (loan id)
+    """
+    while True:
+        # noinspection PyBroadException
+        try:
+            command = int(input("Enter the id of the loan to be deleted: "))
+            break
+        except:
+            print("Error: input must be an integer.")
+
+    return command
+
+
 def get_user_credentials() -> tuple:
     """
     asks a user to enter their email and password
@@ -44,12 +60,27 @@ def _print_help_menu():
     print("\"q\": quit program")
 
 
+def _delete_loan(finance_db, user):
+    """
+    Deletes a loan from the financeTracker database
+    :param finance_db: financeTracker db connection
+    :param user: user object
+    :return:
+    """
+    to_delete = get_loan_id()
+    success = fb.delete_loan(finance_db, user, to_delete)
+    if success:
+        print("Loan", to_delete, "successfully deleted.")
+    else:
+        print("Error: loan with id", to_delete, "could not be deleted.")
+
+
 def _add_loan(finance_db, user):
     """
     Creates a new loan and adds it to both the user and financeTracker db
     :param finance_db: financeTracker database
     :param user: user object
-    :return: True on success
+    :return:
     """
     user = lu.init_multiple_loans(user)
     fb.add_loans_to_db(finance_db, user)
@@ -71,7 +102,7 @@ def _view_loans(finance_db, user):
     if command.lower() == "a" or command.lower() == "s":
         if command.lower() == "s":
             simplify = True
-        loans = fb.return_all_loans(finance_db, user.get_id())
+        loans = fb.return_all_loans(finance_db, user.get_id(), simplify)
     else:
         loan = fb.return_single_loan(finance_db, user.get_id(), command)
         if loan is False:
@@ -81,9 +112,8 @@ def _view_loans(finance_db, user):
             loans.append(loan)
 
     for loan in loans:
-        # TODO: implement simplify all_loan_information
         if simplify:
-            pass
+            print("loan id: ", loan[0], ", total loan amount: ", loan[1], ", interest rate: ", loan[2])
         else:
             loan_summary = lu.detailed_loan_info(loan)
 
@@ -105,18 +135,17 @@ def main_interface(finance_db, user):
         if command.lower() == "h":  # view help
             _print_help_menu()
 
-        elif command.lower() == "a":    # add a loan
+        elif command.lower() == "a":  # add a loan
             _add_loan(finance_db, user)
 
-        elif command.lower() == "d":    # delete a loan
-            # TODO: delete a loan
-            print("Loan was successfully deleted.")
+        elif command.lower() == "d":  # delete a loan
+            _delete_loan(finance_db, user)
 
-        elif command.lower() == "u":    # update a loan
+        elif command.lower() == "u":  # update a loan
             # TODO: update a loan
             print("Loan was successfully updated.")
 
-        elif command.lower() == "v":    # view a loan
+        elif command.lower() == "v":  # view a loan
             _view_loans(finance_db, user)
 
         else:
