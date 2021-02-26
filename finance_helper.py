@@ -86,7 +86,7 @@ def _add_loan(finance_db, user):
     fb.add_loans_to_db(finance_db, user)
     print("New loan(s) was/were added successfully.")
 
-vars()
+
 def _view_loans(finance_db, user):
     """
     Prompts a user to specify which loan they'd like to view in detail.
@@ -99,25 +99,32 @@ def _view_loans(finance_db, user):
     print("Enter the id of the loan you'd like to view, \"a\" to view all loans in detail,")
     command = input("or \"s\" to view a simplified version of all loans: ")
 
+    # If command for view all (detailed or simplified)
     if command.lower() == "a" or command.lower() == "s":
         if command.lower() == "s":
             simplify = True
         loans = fb.return_all_loans(finance_db, user.get_id(), simplify)
+    # Otherwise assume command is the id of a loan
     else:
         loan = fb.return_single_loan(finance_db, user.get_id(), command)
+        # no loan with a matching loan id was found
         if loan is False:
             print("Error: loan with id " + command + " does not exist.")
             return
+        # loan was found -> add it to the loans list
         else:
             loans.append(loan)
 
-    for loan in loans:
-        if simplify:
-            print("loan id: ", loan[0], ", total loan amount: ", loan[1], ", interest rate: ", loan[2])
-        else:
-            loan_summary = lu.detailed_loan_info(loan)
-
-    return None
+    if loans != False:
+        for loan in loans:
+            if simplify:
+                print("loan id: ", loan[0], ", total loan amount: ", loan[1], ", interest rate: ", loan[2],
+                      ", current amount owed: ", loan[3])
+            else:
+                loan_summary = lu.detailed_loan_info(loan)
+    else:
+        print("Error: no loans exist yet.")
+    return
 
 
 # TODO: finish main interface

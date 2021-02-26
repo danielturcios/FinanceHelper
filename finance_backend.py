@@ -54,11 +54,11 @@ def add_loans_to_db(finance_db, user):
     """
     finance_cursor = finance_db.cursor()
 
-    sql = "INSERT INTO debts (uid, amount, interest_rate, num_of_payments) VALUES (%s, %s, %s, %s)"
+    sql = "INSERT INTO debts (uid, amount, interest_rate, num_of_payments, current_amount) VALUES (%s, %s, %s, %s, %s)"
     val = []
     uid = user.get_id()
     for loan in user.get_loans():
-        val.append((uid, loan.principal, loan.interest_rate, loan.num_payments))
+        val.append((uid, loan.principal, loan.interest_rate, loan.num_payments, loan.principal))
     finance_cursor.executemany(sql, val)
     finance_db.commit()
     finance_cursor.close()
@@ -144,7 +144,8 @@ def return_all_loans(finance_db, uid, simplify):
 
     for loan_details in loan_details_list:
         if simplify:
-            loan = (loan_details[4],) + loan_details[1:3]
+            print(loan_details)
+            loan = (loan_details[4],) + loan_details[1:3] + (loan_details[5],)
         else:
             loan = lu.construct_loan(loan_details[1], loan_details[2], loan_details[3])
         loans.append(loan)
