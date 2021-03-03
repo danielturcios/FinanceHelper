@@ -115,7 +115,7 @@ def _view_loans(finance_db, user):
         else:
             loans.append(loan)
 
-    if loans != False:
+    if loans:
         for loan in loans:
             if simplify:
                 print("loan id: ", loan[0], ", total loan amount: ", loan[1], ", interest rate: ", loan[2],
@@ -127,7 +127,29 @@ def _view_loans(finance_db, user):
     return
 
 
-# TODO: finish main interface
+def _update_loan(finance_db, user):
+    """
+    Prompts the user to enter the id of a loan and asks the user to enter the current loan amount
+    (could increase or decrease amount)
+    :param finance_db: financeTracker database connection
+    :param user: user object
+    :return:
+    """
+    loan_id = input("Enter the id of the loan you'd like to update: ")
+    amount = float(input("Enter the new amount of the loan: "))  # 7959.30
+    payment = str(input("Is this a payment? Enter [y/n]: "))
+    if payment.lower() == "y":
+        success = fb.update_loan(finance_db, user.get_id(), loan_id, amount, True)
+    else:
+        success = fb.update_loan(finance_db, user.get_id(), loan_id, amount, False)
+
+    if success:
+        print("Loan with id", loan_id, "updated successfully")
+    else:
+        print("Loan with id", loan_id, "could not be updated")
+    return
+
+
 def main_interface(finance_db, user):
     """
     prompts user to select from viewing, updating, deleting, or adding a new loan/debt
@@ -149,8 +171,7 @@ def main_interface(finance_db, user):
             _delete_loan(finance_db, user)
 
         elif command.lower() == "u":  # update a loan
-            # TODO: update a loan
-            print("Loan was successfully updated.")
+            _update_loan(finance_db, user)
 
         elif command.lower() == "v":  # view a loan
             _view_loans(finance_db, user)

@@ -150,4 +150,33 @@ def return_all_loans(finance_db, uid, simplify):
             loan = lu.construct_loan(loan_details[1], loan_details[2], loan_details[3])
         loans.append(loan)
 
+    finance_cursor.close()
     return loans
+
+
+def update_loan(finance_db, uid, did, amount, payment):
+    """
+    Updates the current loan amount of the loan that corresponds to the given loan id
+    :param finance_db: financeTracker db connection
+    :param uid: int value representing user id
+    :param: did: int value representing loan id
+    :param amount: float value representing the current loan amount
+    :param payment: bool value representing if update is a payment or not
+    :return: True if table is successfully updated, false if otherwise
+    """
+    finance_cursor = finance_db.cursor()
+    if payment:
+        sql = 'UPDATE debts SET current_amount = %s, num_of_payments = num_of_payments - 1 WHERE uid = %s and did =' \
+              ' %s and num_of_payments > 0'
+    else:
+        sql = 'UPDATE debts SET current_amount = %s WHERE uid = %s and did = %s'
+    val = (amount, uid, did)
+    finance_cursor.execute(sql, val)
+
+    finance_db.commit()
+    rows_affected = finance_cursor.rowcount
+    finance_cursor.close()
+
+    if rows_affected == 0:
+        return False
+    return True
